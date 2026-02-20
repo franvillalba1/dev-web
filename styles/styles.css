@@ -21,10 +21,14 @@ nav img {
     border: 1px solid black;
 }
 
-nav li{
+nav ul{
     display: flex;
     gap: 30px;
     align-items: center;
+    list-style: none;
+}
+
+nav li {
     font-size: 22px;
     text-transform: uppercase;
 }
