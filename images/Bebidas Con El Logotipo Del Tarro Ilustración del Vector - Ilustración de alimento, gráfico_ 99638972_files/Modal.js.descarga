@@ -1,0 +1,120 @@
+DT.modal=(()=>{const modal=(options)=>{return modal.Modal.create({...options,modalManager,})};const isPromise=(obj)=>{return((typeof obj==='object'||typeof obj==='function')&&typeof obj.then==='function')};const FOCUSABLE_ELEMENTS=['a[href]','area[href]','input:not([disabled]):not([type="hidden"]):not([aria-hidden]):not([data-state="hidden"])','select:not([disabled]):not([aria-hidden]):not([data-state="hidden"])','textarea:not([disabled]):not([aria-hidden]):not([data-state="hidden"])','button:not([disabled]):not([aria-hidden]):not([data-state="hidden"])','iframe','object','embed','[contenteditable]','[tabindex]:not([tabindex^="-"])',];modal.ModalManager=class{constructor(){this.modals=new WeakMap();this.activeModal=null;this.onModalOpen=this.onModalOpen.bind(this);this.onModalClose=this.onModalClose.bind(this)}
+getActiveModal(){return this.activeModal}
+getModalFromElement(element){return this.modals.get(DT.getElement(element))}
+getByName(name){const element=DT.getElement(`.js-modal[data-name="${name}"]`);return this.modals.get(element)}
+async handleCurrentActiveModal(newActiveModal){const previousActiveModal=this.activeModal;await previousActiveModal.close({closeByNestedModalOpen:!0,});if(!previousActiveModal.openAfterInnerModalClose)return;const afterCloseHandler=(_,{closeByNestedModalOpen})=>{if(closeByNestedModalOpen)return;newActiveModal.removeHook('afterClose',afterCloseHandler);previousActiveModal.open({isOpenAfterInnerModalClose:!0,})};newActiveModal.addHook('afterClose',afterCloseHandler)}
+async onModalOpen(modal){let isOpenAsNestedModal=!1;if(this.activeModal){isOpenAsNestedModal=!0;await this.handleCurrentActiveModal(modal)}
+this.modals.set(modal.$modal,modal);this.activeModal=modal;return{isOpenAsNestedModal,}}
+onModalClose(modal,isDestroyed){if(this.activeModal!==modal)return;if(isDestroyed)this.modals.delete(modal.$modal);this.activeModal=null}
+async closeActiveModal(){if(!this.activeModal)return;await this.activeModal.close()}};modal.Modal=class{constructor({name='',modalManager,content,hooks:{beforeOpen=[],afterOpen=[],beforeClose=[],onClose=[],onCloseIconClick=[],afterClose=[],beforeDestroy=[],afterDestroy=[],contentReady=[],contentReadyBeforeListeners=[],beforeContentLoad=[],contentLoaded=[],contentUpdate=[],contentSet=[],onDisable=[],onEnable=[],beforeLoading=[],afterLoading=[],}={},backgroundDismiss=!1,awaitCloseAnimation=!0,awaitOpenAnimation=!0,closeOnEscape=!1,lazyOpen=!1,closeBehaviour='hide',disableFocus=!1,openAfterInnerModalClose=!0,template='',scrollToPreviousElement=!0,scrollToPreviousElementAnimate=!0,disableScroll=!0,showPageLoadingBeforeLoad=!1,disableAfterClose=!1,appendTo=document.body,}){this.name=name;this.modalManager=modalManager;this.hooks={beforeOpen:this.adaptHook(beforeOpen),afterOpen:this.adaptHook(afterOpen),beforeClose:this.adaptHook(beforeClose),onClose:this.adaptHook(onClose),onCloseIconClick:this.adaptHook(onCloseIconClick),afterClose:this.adaptHook(afterClose),beforeDestroy:this.adaptHook(beforeDestroy),afterDestroy:this.adaptHook(afterDestroy),contentReady:this.adaptHook(contentReady),contentReadyBeforeListeners:this.adaptHook(contentReadyBeforeListeners),beforeContentLoad:this.adaptHook(beforeContentLoad),contentLoaded:this.adaptHook(contentLoaded),contentUpdate:this.adaptHook(contentUpdate),contentSet:this.adaptHook(contentSet),onDisable:this.adaptHook(onDisable),onEnable:this.adaptHook(onEnable),beforeLoading:this.adaptHook(beforeLoading),afterLoading:this.adaptHook(afterLoading),};this.id=DT.modal.Modal.generateId();this.backgroundDismiss=backgroundDismiss;this.awaitCloseAnimation=awaitCloseAnimation;this.awaitOpenAnimation=awaitOpenAnimation;this.closeOnEscape=closeOnEscape;this.isOpen=!1;this.isOpening=!1;this.isClosing=!1;this.lazyOpen=lazyOpen;this.closeBehaviour=closeBehaviour;this.disableFocus=disableFocus;this.openAfterInnerModalClose=openAfterInnerModalClose;this.template=template;this.scrollToPreviousElement=scrollToPreviousElement;this.scrollToPreviousElementAnimate=scrollToPreviousElementAnimate;this.previousActiveElement=null;this.disableScroll=disableScroll;this.optionsContent=content;this.showPageLoadingBeforeLoad=showPageLoadingBeforeLoad;this.content=null;this.contentType=null;this.isDisabled=!1;this.disableAfterClose=disableAfterClose;this.isDestroyed=!1;this.appendTo=appendTo;this.onBackgroundClick=this.onBackgroundClick.bind(this);this.onKeydown=this.onKeydown.bind(this);this.onClickCloseTrigger=this.onClickCloseTrigger.bind(this);this.contentManagedExternally=Symbol('contentManagedExternally');this.initContent()}
+enable(){this.isDisabled=!1;for(const hook of this.hooks.onEnable){hook(this)}}
+disable(){this.isDisabled=!0;for(const hook of this.hooks.onDisable){hook(this)}}
+adaptHook(hook){return Array.isArray(hook)?hook:[hook]}
+addHook(hook,fn){if(!this.hooks[hook])throw new Error(`Hook ${hook} does not exist`);this.hooks[hook].push(fn);return this}
+removeHook(hook,fn){if(!this.hooks[hook])throw new Error(`Hook ${hook} does not exist`);this.hooks[hook]=this.hooks[hook].filter((hookFn)=>hookFn!==fn);return this}
+static generateId(){return Math.random().toString(36).substring(2,11)}
+static async create(options){const modal=new DT.modal.Modal(options);if(!modal.lazyOpen)await modal.open();return modal}
+initContent(){if(this.optionsContent instanceof URL){this.content=this.optionsContent;this.contentType='url';return}
+if(typeof this.optionsContent==='string'){if(this.optionsContent.startsWith('url:')){this.content=new URL(this.optionsContent.replace('url:',''),DT.ajaxBase);this.contentType='url';return}
+if(this.optionsContent.startsWith('json-html:')){const name=this.optionsContent.replace('json-html:','');this.optionsContent=DT.parseJsonHtml(name)}
+const element=DT.getElement(this.optionsContent);if(!element){this.content=this.optionsContent;this.contentType='string';return}
+this.optionsContent=element}
+if(DT.isElement(this.optionsContent)){if(this.optionsContent instanceof HTMLTemplateElement){this.content=this.optionsContent.content.cloneNode(!0);this.contentType='template';return}
+this.content=this.optionsContent.outerHTML;this.contentType='string';return}
+if(isPromise(this.optionsContent)){this.content=this.optionsContent;this.contentType='promise';return}
+if(typeof this.optionsContent==='function'){this.content=this.optionsContent;this.contentType='function';return}
+throw new Error('Invalid content type')}
+async initModalFromContent(content){if(typeof content!=='string'){throw new Error('Content must be a string')}
+this.removeListeners();const renderElement=document.createElement('div');renderElement.innerHTML=content;this.$modal=renderElement.firstElementChild;this.appendTo.append(this.$modal);if(this.template){this.$modal.classList.add(`modal--${this.template}`);this.$modal.setAttribute('data-template',this.template)}else{this.template=this.$modal.getAttribute('data-template')??''}
+if(this.name){this.$modal.classList.add(`modal--${this.name}`);this.$modal.setAttribute('data-name',this.name)}else{this.name=this.$modal.getAttribute('data-name')??''}
+await this.initElements();for(const hook of this.hooks.contentReady){await hook(this)}}
+async openModal(){if(!this.appendTo.contains(this.$modal)){this.appendTo.append(this.$modal)}
+await DT.Scheduler.waitForHighPriority();this.$modal.setAttribute('aria-hidden','false');DT.UI.setCustom(this.$modal,'anim','open');DT.UI.set(this.$modal,'opened');if(this.disableScroll)this.disablePageScroll();if(this.awaitOpenAnimation)await this.waitForAnimation();DT.UI.unsetCustom(this.$modal,'anim');if(!this.disableFocus)this.setFocusToFirstNode();}
+isContentLoaded(){return!DT.isNullish(this.$modal)}
+async open({isOpenAfterInnerModalClose=!1}={}){if(this.isOpen||this.isOpening||this.isDisabled||this.isDestroyed){return}
+this.isOpening=!0;if(!this.isContentLoaded()){await this.loadContent(this.showPageLoadingBeforeLoad)}
+if(isOpenAfterInnerModalClose){this.previousActiveElement=null}else{this.previousActiveElement=document.activeElement}
+for(const hook of this.hooks.beforeOpen){await hook(this)}
+const{isOpenAsNestedModal}=await this.modalManager.onModalOpen(this);if(isOpenAsNestedModal)this.previousActiveElement=null;await this.openModal();this.isOpen=!0;this.isOpening=!1;for(const hook of this.hooks.afterOpen){await hook(this)}}
+async fetchContent(){let content=null;for(const hook of this.hooks.beforeContentLoad){const result=await hook(this);if(typeof result==='string'&&result)content=result}
+if(content)return content;switch(this.contentType){case 'string':content=this.content;break;case 'template':const renderElement=document.createElement('div');renderElement.appendChild(this.content);content=renderElement.innerHTML;break;case 'url':content=await this.getContentFromUrl(this.content.toString());break;case 'promise':content=await this.content;break;case 'function':content=await this.content();break;default:throw new Error(`Unknown content type ${this.contentType}`)}
+return typeof content==='string'?content:this.contentManagedExternally}
+async getContentFromUrl(url){const response=await DT.http.get(url);if(response.status!==200){throw new Error(`Error loading modal content: ${response.statusText}`)}
+if(response.headers.get('Content-Type')?.includes('application/json')){const depsPromise=DT.loadScriptsOnce('js/ajax_html.js');const data=await response.json();const{assets,html}=data;await depsPromise;await DT.ajaxHtml.loadCss(assets);const loadJs=()=>{DT.ajaxHtml.loadJs(assets);this.removeHook('contentReady',loadJs)};this.addHook('contentReady',loadJs);return html}
+return response.text()}
+async loadContent(showPageLoading=!1){if(this.isDisabled||this.isContentLoaded())return;if(showPageLoading)DT.UI.showPageLoading();let content;try{content=await this.fetchContent()}catch(error){DT.log('error','Error loading modal content',error);throw error}finally{if(showPageLoading)DT.UI.hidePageLoading();}
+for(const hook of this.hooks.contentLoaded){await hook(this,{rawContent:content})}
+if(content===this.contentManagedExternally)return;await this.initModalFromContent(content)}
+async closeModal(closeBehaviour){await DT.Scheduler.waitForHighPriority();DT.UI.setCustom(this.$modal,'anim','close');if(this.disableScroll)this.enablePageScroll();if(this.awaitCloseAnimation)await this.waitForAnimation();DT.UI.unsetCustom(this.$modal,'anim');DT.UI.set(this.$modal,'closed');this.$modal.setAttribute('aria-hidden','true');if(closeBehaviour==='remove')this.$modal.remove();else if(closeBehaviour==='destroy')await this._destroy();}
+async close({closeByNestedModalOpen=!1,trigger=null,destroy=!1,disableAfter=!1,}={}){if(!this.isOpen||this.isClosing||this.isDisabled||this.isDestroyed){return}
+this.isClosing=!0;let canceled=!1;for(const hook of this.hooks.beforeClose){const result=await hook(this,{trigger,closeByNestedModalOpen});canceled=result===DT.modal.stopClose}
+if(canceled){this.isClosing=!1;return}
+for(const hook of this.hooks.onClose){await hook(this,{trigger,closeByNestedModalOpen})}
+const isDestroy=destroy||this.closeBehaviour==='destroy';await this.closeModal(isDestroy?'destroy':this.closeBehaviour);this.isClosing=!1;this.isOpen=!1;this.modalManager.onModalClose(this,isDestroy);if(!closeByNestedModalOpen)await this.handlePreviousActiveElement();for(const hook of this.hooks.afterClose){await hook(this,{trigger,closeByNestedModalOpen})}
+if(disableAfter||this.disableAfterClose)this.disable();}
+destroy(){return this.close({destroy:!0})}
+async _destroy(){if(this.isDestroyed)return;for(const hook of this.hooks.beforeDestroy){await hook(this)}
+this.$modal.remove();this.$modal=null;this.$modalOverlay=null;this.$modalContainer=null;this.$modalHeader=null;this.$modalContent=null;this.$modalCloseIcon=null;this.$modalTitle=null;this.$modalFooter=null;this.removeListeners();this.isDestroyed=!0;for(const hook of this.hooks.afterDestroy){await hook(this)}}
+toggle(){return this.isOpen?this.close():this.open()}
+disablePageScroll(){DT.UI.setCustom(document.body,'modal-locked','')}
+enablePageScroll(){DT.UI.unsetCustom(document.body,'modal-locked')}
+showLoading(theme='dark'){if(!this.isOpen||this.isDisabled)return;for(const hook of this.hooks.beforeLoading){hook(this,this.$modalContainer)}
+DT.UI.showLoading({element:this.$modalContainer,theme,})}
+hideLoading(){DT.UI.hideLoading(this.$modalContainer);for(const hook of this.hooks.afterLoading){hook(this,this.$modalContainer)}}
+showLoadingContent(theme='dark'){if(!this.isOpen||this.isDisabled)return;for(const hook of this.hooks.beforeLoading){hook(this,this.$modalContent)}
+DT.UI.showLoading({element:this.$modalContent,theme,})}
+hideLoadingContent(){DT.UI.hideLoading(this.$modalContent);for(const hook of this.hooks.afterLoading){hook(this,this.$modalContent)}}
+async initElements(){this.$modalOverlay=this.$modal.querySelector('.js-modal-overlay');this.$modalContainer=this.$modal.querySelector('.js-modal-container');this.$modalHeader=this.$modal.querySelector('.js-modal-header');this.$modalContent=this.$modal.querySelector('.js-modal-content');this.$modalCloseIcon=this.$modal.querySelector('.js-modal-close-icon');this.$modalTitle=this.$modal.querySelector('.js-modal-title');this.$modalFooter=this.$modal.querySelector('.js-modal-footer');if(!Object.prototype.hasOwnProperty.call(this,'$modalCloseTriggers')){Object.defineProperty(this,'$modalCloseTriggers',{get:()=>{if(!this.$modal)return null;return[...this.$modal.querySelectorAll('.js-modal-close-trigger')]},})}
+if(this.$modalTitle){const uniqueTitleId=`${this.$modalTitle.id}-${this.id}`;this.$modalContainer.setAttribute('aria-labelledby',uniqueTitleId);this.$modalTitle.id=uniqueTitleId}
+for(const hook of this.hooks.contentReadyBeforeListeners){await hook(this)}
+this.initListeners()}
+registerModalCloseTrigger($trigger){$trigger.classList.add('js-modal-close-trigger')}
+initListeners(){this.$modal.addEventListener('click',this.onBackgroundClick);this.initGlobalListeners()}
+removeListeners(){this.$modal?.removeEventListener('click',this.onBackgroundClick);this.removeGlobalListeners()}
+initGlobalListeners(){document.addEventListener('click',this.onClickCloseTrigger);document.addEventListener('keydown',this.onKeydown)}
+removeGlobalListeners(){document.removeEventListener('click',this.onClickCloseTrigger);document.removeEventListener('keydown',this.onKeydown)}
+onClickCloseTrigger(event){if(this.isDisabled)return;const closeTrigger=event.target.closest('.js-modal-close-trigger');const invalidTrigger=!this.isOpen||!closeTrigger||!this.$modal.contains(event.target);if(invalidTrigger)return;if(closeTrigger===this.$modalCloseIcon){this.handleCloseIconClick(event);return}
+this.close({trigger:event.target,})}
+async handleCloseIconClick(event){if(this.isDisabled)return;let canceled=!1;for(const hook of this.hooks.onCloseIconClick){const result=await hook(this,{event,$modalCloseIcon:this.$modalCloseIcon,});if(result===DT.modal.stopClose)canceled=!0}
+if(canceled)return;this.close({trigger:this.$modalCloseIcon,})}
+onBackgroundClick(event){if(this.isDisabled)return;const isValidTarget=event.target===this.$modalOverlay||event.target===this.$modal||event.target===document.body;if(!isValidTarget)return;if(this.backgroundDismiss){this.close();return}
+this.backgroundDismissAnimation()}
+backgroundDismissAnimation(){this.$modalContainer.addEventListener('animationend',(event)=>{if(event.animationName!=='shake')return;DT.UI.unsetCustom(this.$modalContainer,'anim')},{capture:!1,once:!0,});DT.UI.setCustom(this.$modalContainer,'anim','shake')}
+onKeydown(event){if(!this.isOpen||this.isDisabled||!this.isContentLoaded())return;if(event.key==='Escape'){const isValidTarget=event.target===document.body||event.target===this.$modal||event.target===this.$modalOverlay||event.target===this.$modalCloseIcon||!FOCUSABLE_ELEMENTS.some((selector)=>{return event.target.matches(selector)});if(!isValidTarget)return;if(this.closeOnEscape){this.close();return}
+this.backgroundDismissAnimation();return}
+if(event.key==='Tab')this.retainFocus(event);}
+waitForAnimation(){return new Promise((resolve)=>{this.$modal.addEventListener('animationend',(event)=>{if(!['mmfadeIn','mmfadeOut','mmslideIn','mmslideOut'].includes(event.animationName)){return}
+resolve()},{capture:!1,once:!0,})})}
+async handlePreviousActiveElement(){if(this.previousActiveElement&&this.scrollToPreviousElement){await this.handleScrollToPreviousElement()}
+this.previousActiveElement=null}
+async handleScrollToPreviousElement(){const invalidElement=!document.contains(this.previousActiveElement)||this.previousActiveElement===document.body||this.previousActiveElement===document.documentElement;if(invalidElement)return;if(this.scrollToPreviousElementAnimate){await DT.animation.scrollSmoothTo(this.previousActiveElement);this.previousActiveElement.focus();return}
+this.previousActiveElement.scrollIntoView();this.previousActiveElement.focus()}
+async setContent(content){if(!this.$modalContent||this.isDisabled||!this.isContentLoaded()){return}
+this.$modalContent.innerHTML=content;for(const hook of this.hooks.contentSet){await hook(this,{content,})}}
+async appendContent(content){if(!this.$modalContent||this.isDisabled||!this.isContentLoaded()){return}
+this.$modalContent.insertAdjacentHTML('beforeend',content);for(const hook of this.hooks.contentUpdate){await hook(this,{type:'contentAppend',content,})}}
+async prependContent(content){if(!this.$modalContent||this.isDisabled||!this.isContentLoaded()){return}
+this.$modalContent.insertAdjacentHTML('afterbegin',content);for(const hook of this.hooks.contentUpdate){await hook(this,{type:'contentPrepend',content,})}}
+async setTitle(title){if(!this.$modalTitle||this.isDisabled||!this.isContentLoaded()){return}
+this.$modalTitle.textContent=title;for(const hook of this.hooks.contentUpdate){await hook(this,{type:'title',title,})}}
+retainFocus(event){let focusableNodes=this.getFocusableNodes();if(focusableNodes.length===0)return;focusableNodes=focusableNodes.filter((node)=>{return node.offsetParent!==null});if(!this.$modal.contains(document.activeElement)){focusableNodes[0].focus();return}
+const focusedItemIndex=focusableNodes.indexOf(document.activeElement);if(event.shiftKey&&focusedItemIndex===0){focusableNodes[focusableNodes.length-1].focus();event.preventDefault()}
+if(!event.shiftKey&&focusableNodes.length>0&&focusedItemIndex===focusableNodes.length-1){focusableNodes[0].focus();event.preventDefault()}}
+setFocusToFirstNode(){const focusableNodes=this.getFocusableNodes();if(focusableNodes.length===0)return;const nonCloseElements=focusableNodes.filter((node)=>{return!node.classList.contains('js-modal-close-trigger')});if(nonCloseElements.length>0){nonCloseElements[0].focus();return}
+focusableNodes[0].focus()}
+getFocusableNodes(){const nodes=this.$modal.querySelectorAll(FOCUSABLE_ELEMENTS);return[...nodes]}};modal.ModalConfirm=class extends modal.Modal{static cachedTemplate=null;constructor({title=null,titleClassList=[],description,descriptionClassList=[],onConfirm=null,buttons={confirm:{text:'Confirm',classList:['btn','btn--green','btn--mdm'],action:onConfirm,},cancel:{text:'Cancel',classList:['btn','btn--grey','btn--mdm'],isClose:!0,},},...modalOptions}){super({...modalOptions,backgroundDismiss:!1,closeOnEscape:!1,content:'url:components/Modal/Confirm/Confirm.ajax.php',});this.title=title;this.titleClassList=titleClassList;this.optionButtons=buttons;this.description=description;this.descriptionClassList=descriptionClassList;this.$modalButtons={};this.buttonsDisabled=!1;this.useCachedTemplate=this.useCachedTemplate.bind(this);this.cacheTemplate=this.cacheTemplate.bind(this);this.initConfirmElements=this.initConfirmElements.bind(this);this.unsetConfirmElements=this.unsetConfirmElements.bind(this);this.onCloseIconClick=this.onCloseIconClick.bind(this);this.addHook('beforeContentLoad',this.useCachedTemplate);this.addHook('contentLoaded',this.cacheTemplate);this.addHook('contentReadyBeforeListeners',this.initConfirmElements);this.addHook('afterDestroy',this.unsetConfirmElements);this.addHook('onCloseIconClick',this.onCloseIconClick)}
+static async create(options){const modal=new DT.modal.ModalConfirm(options);if(!modal.lazyOpen)await modal.open();return modal}
+disableButtons(){this.buttonsDisabled=!0}
+enableButtons(){this.buttonsDisabled=!1}
+onCloseIconClick(){if(this.buttonsDisabled)return DT.modal.stopClose}
+useCachedTemplate(){if(DT.modal.ModalConfirm.cachedTemplate){return DT.modal.ModalConfirm.cachedTemplate}}
+cacheTemplate(_,{rawContent}){if(DT.modal.ModalConfirm.cachedTemplate)return;DT.modal.ModalConfirm.cachedTemplate=rawContent}
+initConfirmElements(){if(this.title){this.$modalTitle.textContent=this.title;if(this.titleClassList.length){this.$modalTitle.classList.add(...this.titleClassList)}}else{this.$modalHeader.remove();this.$modalHeader=null;this.$modalTitle=null}
+this.$modalDescription=this.$modal.querySelector('.js-modal-confirm-description');this.$modalDescription.textContent=this.description;if(this.descriptionClassList.length){this.$modalDescription.classList.add(...this.descriptionClassList)}
+for(const[key,value]of Object.entries(this.optionButtons)){const button=this.createButton(key,value);this.$modalFooter.append(button);this.$modalButtons[key]=button}}
+unsetConfirmElements(){this.$modalButtons={};this.$modalDescription=null}
+createButton(key,{text=null,classList='',attributes={},action=null,customize=null,isClose=!1,}={}){const button=document.createElement('button');button.type='button';if(text){button.textContent=text}else{button.textContent=key.charAt(0).toUpperCase()+key.slice(1)}
+button.classList.add('js-modal-confirm-button');if(classList.length)button.classList.add(...classList);if(attributes){for(const[key,value]of Object.entries(attributes)){button.setAttribute(key,value)}}
+if(action){if(DT.toType(action)==='function'){action={handler:action}}
+const onAction=action.handler?action.handler.bind(this):()=>{return!0};const actionClickHandler=async(event)=>{if(this.isDisabled||this.buttonsDisabled)return;const actionResult=await onAction(event,button,()=>{button.removeEventListener('click',actionClickHandler)});if(actionResult===!0)this.close();};button.addEventListener('click',actionClickHandler,{once:action.once===!0,})}
+if(isClose)this.registerModalCloseTrigger(button);if(customize)customize(button);return button}};const modalManager=new modal.ModalManager();const confirm=(options)=>{return modal.ModalConfirm.create({...options,modalManager,})};modal.confirm=confirm;modal.manager=modalManager;modal.closeActive=modalManager.closeActiveModal.bind(modalManager);modal.getActive=modalManager.getActiveModal.bind(modalManager);modal.getFromElement=modalManager.getModalFromElement.bind(modalManager);modal.getByName=modalManager.getByName.bind(modalManager);modal.stopClose=Symbol('stopClose');return modal})()

@@ -1,0 +1,1 @@
+.copy-line{background-color:var(--dt-grey-ll)}.copy-line__content::after{background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgb(242,242,242) 100%);border-right-color:var(--dt-grey-ll)}

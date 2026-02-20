@@ -1,0 +1,2 @@
+DT.onReady(()=>{let modal=null;let isLoading=!1;const openModal=async()=>{if(isLoading)return;if(modal===null)await loadModal();modal?.open()};document.addEventListener('click',(event)=>{if(!event.target.closest('.js-share-btn:not([data-custom-behavior])')){return}
+openModal()});const loadModal=async()=>{if(modal!==null)return;await DT.Scheduler.waitForHighPriority();isLoading=!0;try{modal=await DT.modal({content:'json-html:share-modal-tpl',backgroundDismiss:!0,closeOnEscape:!0,})}catch(error){DT.log('error','Failed to load share modal',error)}finally{isLoading=!1}}})
