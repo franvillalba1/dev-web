@@ -1,0 +1,134 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: rgb(124, 1, 240);
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 30px;
+  border: 1px solid grey;
+}
+nav img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 1px solid black;
+}
+nav ul {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  list-style: none;
+}
+nav li {
+  font-size: 22px;
+  text-transform: uppercase;
+}
+nav li a {
+  text-decoration: none;
+  color: rgb(108, 210, 7);
+}
+
+h1 {
+  text-align: center;
+  color: rgb(108, 210, 7);
+  font-size: 50px;
+}
+
+h2 {
+  text-align: center;
+  margin: 10px;
+  margin-bottom: 30px;
+  font-size: 30px;
+  color: rgb(108, 210, 7);
+}
+
+h3 {
+  font-size: 25px;
+  color: rgb(108, 210, 7);
+}
+
+.card {
+  width: 100%;
+  height: 350px;
+  text-align: center;
+  gap: 20px;
+}
+.card img {
+  width: 100%;
+  height: 150px;
+  border-radius: 10%;
+  object-fit: cover;
+}
+.card p {
+  font-size: 20px;
+  color: rgb(108, 210, 7);
+}
+
+.container-index {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 15px;
+  align-content: start;
+}
+
+.container-publicidades {
+  display: grid;
+  grid-template-columns: 200px 1fr 200px;
+  gap: 5px;
+}
+.container-publicidades img {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+}
+
+.div-button-index {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  gap: 10px 20px;
+}
+
+.btn-agregar,
+.btn-eliminar {
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  transition: all 0.25s ease;
+}
+
+.btn-agregar {
+  background: linear-gradient(135deg, #28a745, #34d058);
+}
+.btn-agregar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+.btn-agregar:active {
+  transform: scale(0.95);
+}
+
+.btn-eliminar {
+  background: linear-gradient(135deg, #dc3545, #ff4d5a);
+}
+.btn-eliminar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+.btn-eliminar:active {
+  transform: scale(0.95);
+}
+
+/*# sourceMappingURL=main.css.map */
