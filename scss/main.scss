@@ -6,7 +6,29 @@
     box-sizing: border-box;
 }
 body{
-    background-color: rgb(124, 1, 240);
+    background-color: $color-fondo;
+}
+@media (max-width: 574px){
+    nav{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        ul{
+            display: flex;
+            flex-direction: column;
+            justify-content: center; 
+        }
+    }
+}
+    
+.banner{
+    object-fit: cover;
+}
+@media (max-width: 768px){
+    .banner{
+        height: 120px;
+        margin-bottom: 15px;
+    }
 }
 nav{
     display: flex;
@@ -50,6 +72,10 @@ h2{
     color: $color-principal;
 }
 h3{
+    font-size: 25px;
+    color: $color-principal;
+}
+h5{
     font-size: 25px;
     color: $color-principal;
 }
@@ -127,4 +153,7 @@ h3{
   &:active {
     transform: scale(0.95);
   }
+}
+.card-movil{
+    background-color: $color-fondo;
 }
