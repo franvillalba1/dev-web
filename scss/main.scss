@@ -157,3 +157,67 @@ h5{
 .card-movil{
     background-color: $color-fondo;
 }
+
+.form-reclamos{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 400px;
+    margin: 20px;
+    background-color: rgb(36, 1, 69);
+    border: 1px solid grey;
+    .campo{
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            label{
+                color: $color-principal;
+            }
+    }
+}
+
+.main-quienes-somos
+    {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 15px;
+    margin: 15px;
+    }
+    .div-quienes-somos1{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 15px;
+        margin: 10px;
+        .p-quienes-somos{
+            color: $color-principal;
+            font-size: 18px;
+            text-align: center;
+        }
+        .img-somos{
+            height: 300px;
+            width: 100%;
+            object-fit: cover;
+        }
+        h3{
+            text-align: center;
+        }
+    }
+
+@media(min-width: 575px){
+    .div-quienes-somos1{
+        .main-quienes-somos {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+    .div-quienes-somos1 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: 1fr;
+        margin: 10px;
+        gap: 10px;
+    }
+    }
+   
+}
