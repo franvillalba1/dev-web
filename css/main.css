@@ -162,7 +162,14 @@ h5 {
   background-color: rgb(124, 1, 240);
 }
 
-.form-reclamos {
+.main-reclamos {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.form-reclamos, .form-trabajo {
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -171,12 +178,12 @@ h5 {
   background-color: rgb(36, 1, 69);
   border: 1px solid grey;
 }
-.form-reclamos .campo {
+.form-reclamos .campo, .form-trabajo .campo {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-.form-reclamos .campo label {
+.form-reclamos .campo label, .form-trabajo .campo label {
   color: rgb(108, 210, 7);
 }
 

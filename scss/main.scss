@@ -158,7 +158,13 @@ h5{
     background-color: $color-fondo;
 }
 
-.form-reclamos{
+.main-reclamos{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.form-reclamos, .form-trabajo{
     display: flex;
     flex-direction: column;
     gap: 15px;

@@ -20,8 +20,10 @@
             <img src="../images/logo1.jpg" alt="logo principal">
         </nav>
     </header>
-    <main>
-        <h1>Dejanos Tu Reclamo</h1>
+    <main class="main-reclamos">
+        <h1>Reclamos y Trabajos</h1>
+        <div class="div-reclamos-1">
+            <h2>Aqui podes registrar tu reclamo</h2>
             <form action="" class="form-reclamos">
                 <div class="campo">
                 <label for="nombre">Nombre</label>
@@ -49,6 +51,36 @@
                 </div>
                 <button type="submit">Enviar</button>
             </form>
+            </div>
+            <div class="div-reclamos-2">
+                <h2>Sumate a Nuestra Empresa</h2>
+                 <form action="" class="form-trabajo">
+                <div class="campo">
+                <label for="nombre">Nombre</label>
+                <input type="text" id="nombre" placeholder="Ingresa tu nombre">
+                </div>
+                <div class="campo">
+                <label for="apellido">Apellido</label>
+                <input type="text" id="apellido" placeholder="Ingresa tu apellido">
+                </div>
+                <div class="campo">
+                <label for="correo">Correo</label>
+                <input type="email" id="correo" placeholder="Ingresa tu correo">
+                </div>
+                <div class="campo">
+                <label for="dni">dni</label>
+                <input type="number" id="dni" placeholder="Nombre del producto">
+                </div>
+                <div class="campo">
+                <label for="comentario">porque te gustaria sumarte</label>
+                <textarea id="comentario" placeholder="lo que te surja"></textarea>
+                </div>
+                <div class="campo">
+                <label for="archivo">Subí tu CV</label>
+                <input type="file" id="archivo">
+                </div>
+                <button type="submit">Enviar</button>
+            </div>
 </main>
     <footer></footer>
 </body>
